@@ -1,3 +1,4 @@
+#!/bin/python
 ###################################################################
 # LaTeX-BibitemsStyler
 #
@@ -29,6 +30,7 @@ from __future__ import print_function
 from collections import namedtuple, OrderedDict
 import os
 import sys
+import re
 
 # Check default encoding
 if (sys.stdout.encoding is None):            
@@ -109,8 +111,8 @@ class Styler:
             s = f.read()  # read file to end
             # parse current file looking for \cite commands, and store all cite keys in
             # an array in their order of appearance
-            while s.find('\\cite{') != -1:
-                s = s[s.find('\\cite{')+len('\\cite{'):]
+            while re.search('(?<!%)\\\\cite{',s) != None:  # s.find('\\cite{') != -1:
+                s = s[re.search('(?<!%)\\\\cite{',s).start()+len('\\cite{'):]
                 temp = s[:s.find('}')]
                 # handle multiple keys inside single citation
                 cites = temp.split(',')
@@ -138,8 +140,8 @@ class Styler:
                 s = f.read()  # read file to end
                 # parse current file looking for \cite commands, and store all cite keys
                 # in an array in their order of appearance
-                while s.find('\\cite{') != -1:
-                    s = s[s.find('\\cite{')+len('\\cite{'):]
+                while re.search('(?<!%)\\\\cite{',s) != None:  # s.find('\\cite{') != -1:
+                    s = s[re.search('(?<!%)\\\\cite{',s).start()+len('\\cite{'):]
                     temp = s[:s.find('}')]
                     # handle multiple keys inside single citation
                     cites = temp.split(',')
@@ -224,12 +226,11 @@ class Styler:
                 # have been written in the output file.
                 if self.dBibitems:  # there are still bibitems left that were not cited
                     print('\n+ There are bibitems that were not cited in the latex '
-                          'project. \nDo you want to include them in the same order '
-                          'they were read? (y/N)')
-                    if input() == 'y':
-                       for key in self.dBibitems:
-                           f.write('\\bibitem{' + key + '} ' + self.dBibitems[key] +
-                                   '\n\n')
+                          'project. \nDo you want to discard them? If not, they will be included \nin the same order they were read. (y/N)')
+                    if input() == 'N':
+                        for key in self.dBibitems:
+                            f.write('\\bibitem{' + key + '} ' + self.dBibitems[key] +
+                                        '\n\n')
             print('\t\twriting postamble')
             f.write('\n' + self.postamble)
         except:
@@ -260,8 +261,8 @@ class Styler:
             print(self.outputBibFile)
 
             print('\n+ This is the default bibliography preamble\n\n', self.preamble)
-            print('\n\n+ Do you want to change it? (y/N)')
-            if input() == 'y':
+            print('\n\n+ Do you want to keep it? (y/N)')
+            if input() == 'N':
                print('\n+ Enter preamble (type \'\\q\' to submit)\n')
                k = ''
                self.preamble = ''
@@ -271,8 +272,8 @@ class Styler:
                        self.preamble += k
 
             print('\n+ This is the default bibliography postamble\n\n', self.postamble)
-            print('\n\n+ Do you want to change it? (y/N)')
-            if input() == 'y':
+            print('\n\n+ Do you want to keep it? (y/N)')
+            if input() == 'N':
                print('\n+ Enter postamble (type \'\\q\' to submit)\n')
                k = ''
                self.postamble = ''
@@ -299,26 +300,54 @@ class Styler:
         else:
             print('Please enter a valid main Tex file path')
 
+def bibCreator(filename):
+    fileobject = (open(filename, 'r'))
+    rawtext = fileobject.read()
+    fileobject.close()
+    start = '\\begin{thebibliography}'
+    end = '\\end{thebibliography}'
+    bibliography = rawtext[rawtext.find(start)+len(start):rawtext.rfind(end)]
+    newfile='tmp_'+filename[:-4]+'_OldBib.tex'
+    fileobject = open(newfile, 'w')
+    fileobject.write(start)
+    fileobject.write(bibliography)
+    fileobject.write('\n'+end+'\n\n%%%%% CLEAR DOUBLE PAGE!\n' \
+            + '\\newpage{\\pagestyle{empty}\\cleardoublepage}')
+    fileobject.close
+    return newfile
 
 def main():
     try:
         styler = Styler(mainTexFile=sys.argv[1],
-                        bibFilename=sys.argv[2],
-                        outputBibFile=sys.argv[3],
-                        style_index=int(sys.argv[4]))
+                        bibFilename=bibCreator(sys.argv[1]),
+                        outputBibFile='tmp_'+sys.argv[1][:-4]+'_NewBib.tex',
+                        style_index=int(sys.argv[2]))
     except:
-        print('Please run the program with 4 arguments:')
+        print('Please run the program with 2 arguments:')
         print('    - The main tex file path (use double \'\\\' if on Windows)')
-        print('    - The bibliography Tex file name')
-        print('    - The output bibliography Tex file name')
         print('    - The bibliography style:')
         print('0 - PLAIN (Original order)')
         print('1 - ALPHA (Alphanumerical order)')
         print('2 - UNSRT (Cite order of appearance)')
+        print('\n\nOr you can type in Filename and choose style manually in the following. ')
         print()
-        raise
+        # raise
+        try: 
+            styler = Styler(mainTexFile=sys.argv[1],
+                        bibFilename=bibCreator(sys.argv[1]),
+                        outputBibFile='tmp_'+sys.argv[1][:-4]+'_NewBib.tex',
+                        style_index=int(raw_input("\n\nEnter LaTeX bibliography style \n0 - PLAIN (Original order)\n1 - ALPHA (Alphanumerical order)\n2 - UNSRT (Cite order of appearance): ")))
+        except:
+            texfile = raw_input("\n\nEnter LaTeX source filename (e.g. 'input.tex'): ")
+            
+            styler = Styler(mainTexFile=texfile,
+                            bibFilename=bibCreator(texfile),
+                            outputBibFile='tmp_'+texfile[:-4]+'_NewBib.tex',
+                            style_index=int(raw_input("\n\nEnter LaTeX bibliography style \n0 - PLAIN (Original order)\n1 - ALPHA (Alphanumerical order)\n2 - UNSRT (Cite order of appearance): ")))
+
+
     styler.StyleBibitems()
 
-
+    
 if __name__ == '__main__':
     main()
