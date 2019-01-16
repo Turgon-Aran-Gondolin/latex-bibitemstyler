@@ -317,19 +317,20 @@ def bibCreator(filename):
     return newfile
 
 def main():
+    helpmsg='Usage: LaTeX-BibitemStyler \n   or: LaTeX-BibitemStyler [-h | --help] [<mainTeXFile>] [<BibliographyStyle>]\n\n        <mainTeXFile>\n\t\tThe main tex file containing your article and bibliography. \n\t<BibliographyStyle>\n\t\tThe bibliography style of output. \n\t\t0 - PLAIN (Original order)\n\t\t1 - ALPHA (Alphanumerical order)\n\t\t2 - UNSRT (Cite order of appearance)\n\t-h, --help\n\t\tPrint this message. '
+    
     try:
+        if sys.argv[1]=='-h' or sys.argv[1]=='--help':
+            print(helpmsg)
+            sys.exit(1)
         styler = Styler(mainTexFile=sys.argv[1],
                         bibFilename=bibCreator(sys.argv[1]),
                         outputBibFile='tmp_'+sys.argv[1][:-4]+'_NewBib.tex',
                         style_index=int(sys.argv[2]))
-    except:
-        print('Please run the program with 2 arguments:')
-        print('    - The main tex file path (use double \'\\\' if on Windows)')
-        print('    - The bibliography style:')
-        print('0 - PLAIN (Original order)')
-        print('1 - ALPHA (Alphanumerical order)')
-        print('2 - UNSRT (Cite order of appearance)')
-        print('\n\nOr you can type in Filename and choose style manually in the following. ')
+    except SystemExit:
+        sys.exit(1)
+    else:
+        print(helpmsg)
         print()
         # raise
         try: 
@@ -337,7 +338,7 @@ def main():
                         bibFilename=bibCreator(sys.argv[1]),
                         outputBibFile='tmp_'+sys.argv[1][:-4]+'_NewBib.tex',
                         style_index=int(raw_input("\n\nEnter LaTeX bibliography style \n0 - PLAIN (Original order)\n1 - ALPHA (Alphanumerical order)\n2 - UNSRT (Cite order of appearance): ")))
-        except:
+        except IndexError:
             texfile = raw_input("\n\nEnter LaTeX source filename (e.g. 'input.tex'): ")
             
             styler = Styler(mainTexFile=texfile,
