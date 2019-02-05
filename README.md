@@ -25,7 +25,7 @@ If you found this useful, please drop us a line! Reviews and suggestions are ver
 
 ### My Update
 
-In my recent update, the bibliography `.tex` file is auto-generated, and output filename is desinated. I believe there's no need to specify the output file since it won't be of any use except for temporary storage. The output file is named by "tmp_<maintexfile>_NewBib.tex". Also you don't need to worry about commented "\cite". 
+In my recent update, the bibliography `.tex` file is auto-generated, and output filename is desinated. I believe there's no need to specify the output file since it won't be of any use except for temporary storage. The output file is named by "tmp_\<maintexfile\>_NewBib.tex". Also you don't need to worry about commented "\cite". 
 
 Usage: LaTeX-BibitemStyler 
 
